@@ -1,0 +1,20 @@
+[
+  {
+    "id": "euro-contemporary",
+    "name": "European Contemporary",
+    "folder": "euro-contemporary",
+    "description": "Refined European apartment style — considered material mix (stone, brass, dark woods, plaster), architectural elegance, balanced decorative density, soft natural light."
+  },
+  {
+    "id": "modern-wabi-sabi",
+    "name": "Modern Wabi-Sabi",
+    "folder": "modern-wabi-sabi",
+    "description": "Japanese wabi-sabi reinterpreted for modern interiors — limewashed and plaster walls, undyed linen, hand-thrown ceramics, aged and raw woods, muted earth tones, embraced imperfection and asymmetry."
+  },
+  {
+    "id": "warm-minimalism",
+    "name": "Warm Minimalism",
+    "folder": "warm-minimalism",
+    "description": "Minimal but never cold — soft neutrals, layered natural textiles, warm woods, abundant diffuse natural light, restrained but inviting and lived-in."
+  }
+]
