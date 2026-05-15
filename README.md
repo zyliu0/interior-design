@@ -265,4 +265,4 @@ interior-design/
 
 ## License & credits
 
-No code license declared yet — treat as all-rights-reserved until a `LICENSE` file lands. Reference images are placeholders bundled for testing; bring your own for production use. See [Adding your own styles](#adding-your-own-styles).
+Code is MIT licensed — see [LICENSE](./LICENSE). Reference images are placeholders bundled for testing; bring your own for production use. See [Adding your own styles](#adding-your-own-styles).
