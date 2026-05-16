@@ -26,15 +26,28 @@ Scan your own tool list. Do you have a tool **right now** that accepts text + on
 
 ## Step 1 — Collect inputs (identical in both modes)
 
-Use the host's question UI (e.g. `AskUserQuestion`) to gather:
+Use the host's question UI (e.g. `AskUserQuestion`) to gather each input below. **Hard rule: never guess or auto-fill any input the user did not explicitly name.** If a value isn't in the user's original message, you ask. Always.
 
-1. **Raw image path** — required. The image of the space to be restyled (sketch, photo, or 3D screenshot).
-2. **Style choice** — present these options, reading the current list from `references/styles.json`:
+1. **Raw image path** — required. The image of the space to be restyled (sketch, photo, or 3D screenshot). Ask if not supplied.
+
+2. **Style choice — REQUIRED. NEVER PICK A STYLE FOR THE USER.**
+
+   You MUST present the question UI with the available styles UNLESS the user has *explicitly* named a specific style in their original message — by exact id (`euro-contemporary`, `modern-wabi-sabi`, `warm-minimalism`) or by exact name ("European Contemporary", "Modern Wabi-Sabi", "Warm Minimalism").
+
+   The following are NOT explicit style choices and MUST trigger the question UI:
+   - Vibe words: "cozy", "elegant", "modern", "warm", "minimal", "Japanese", "European".
+   - Inferences from the raw image's content, lighting, or existing furniture.
+   - Defaults of any kind (no "first style", no "most popular", no random pick).
+   - The user saying "you choose" or "pick whatever" — even then, ask, then let them confirm.
+
+   When you ask, present these options, reading the current list from `references/styles.json`:
    - European Contemporary (`euro-contemporary`)
    - Modern Wabi-Sabi (`modern-wabi-sabi`)
    - Warm Minimalism (`warm-minimalism`)
    - "Upload my own" — if chosen, ask for a file path to a custom reference image.
+
 3. **Optional second reference path** — leave blank to skip.
+
 4. **Optional user prompt** — any additional direction (e.g. "warm evening lighting", "add a leather sofa"). Leave blank to skip.
 
 Validate each path exists and points to a readable image file before proceeding. If invalid, surface a clear error and ask again.
