@@ -15,14 +15,49 @@ description: |
 
 Generate a photorealistic interior rendering from a raw image + style references. Host-agnostic: runs natively when the host can generate images, falls back to a Gemini / OpenAI API call otherwise.
 
-## Step 0 — Mode detection (do this first, before asking anything)
+## Step 0 — Mode detection (work the ladder top-to-bottom)
 
-Scan your own tool list. Do you have a tool **right now** that accepts text + one or more input images and returns a generated image? (Tool names vary by host — `image_generation`, `generate_image`, a built-in image tool, etc.)
+The goal is to use the host's native image generation whenever it exists, and only fall back to the API path when nothing else is wired up. **Do not stop at the first failed check.** Many hosts expose image generation through a *skill* rather than a directly-visible tool — our previous "scan your tool list and bail" logic missed those and incorrectly fell through to API mode. Walk this ladder:
 
-- **Yes, or you're not sure** → **Mode A (native)**. You will use your own image-gen tool. Skip the API-key sections below.
-- **Confirmed no** (you scanned your tool list and there is nothing for image generation) → **Mode B (API fallback)**. You will shell out to `scripts/render.py`.
+### A. Delegate to a host `imagegen` skill (preferred)
 
-**Mode A is preferred. Try it first.** If the native call errors with "tool not available" or similar, fall through to Mode B.
+Many hosts ship an `imagegen` skill that knows how to invoke their native image-generation primitive. Check these paths for an existing `SKILL.md`:
+
+```
+~/.codex/skills/.system/imagegen/SKILL.md
+~/.codex/skills/imagegen/SKILL.md
+~/.agents/skills/imagegen/SKILL.md
+~/.claude/skills/imagegen/SKILL.md
+./.agents/skills/imagegen/SKILL.md
+```
+
+A quick way to check:
+
+```bash
+for p in ~/.codex/skills/.system/imagegen ~/.codex/skills/imagegen ~/.agents/skills/imagegen ~/.claude/skills/imagegen ./.agents/skills/imagegen; do [ -f "$p/SKILL.md" ] && echo "FOUND: $p/SKILL.md"; done
+```
+
+If one is found, **read its `SKILL.md`** to learn its input format, then plan to use it in Step 5a. This path is the most robust because the `imagegen` skill handles tool-name plumbing, feature-flag detection, and host quirks for you.
+
+### B. Direct image-gen tool in your tool list
+
+Scan your currently visible tools for an image-generation primitive. Tool names vary by host — try at least: `image_gen`, `image_generation`, `generate_image`, `imagegen`, `create_image`. If you have a tool-search capability (e.g. `ToolSearch` in Claude Code), also query for those names — the tool may be deferred and load on demand.
+
+If any callable tool surfaces, plan to use it directly in Step 5a.
+
+### C. Host advertises image gen but tool is hidden
+
+On Codex, run `codex features list`. If it shows `image_generation stable true` but rungs A and B both came up empty, **do not silently fall back to API mode** — that's the bug this section is fixing. Surface the contradiction to the user:
+
+> "Your host advertises image generation as enabled, but no callable tool is exposed in this session and no `imagegen` skill is installed at the expected paths (`~/.codex/skills/.system/imagegen/`, etc.). Options: (1) install one with `npx skills add vercel-labs/skills --skill imagegen`, then re-run me; (2) fall back to API mode if you have a Gemini or OpenAI key in `.env`."
+
+Wait for the user to choose. Do not auto-fall-through.
+
+### D. Mode B (API fallback)
+
+Only after A, B, and C are all confirmed unavailable: route to Mode B and shell out to `scripts/render.py`. This is the path that requires an API key.
+
+**Bias:** if you're unsure whether you have native image gen, lean Mode A — try it. The previous version of this skill defaulted to Mode B on uncertainty, which caused users to be asked for unnecessary API keys when their host could already do the work.
 
 ## Step 1 — Collect inputs (identical in both modes)
 
@@ -82,14 +117,31 @@ Final image list for the call, in this exact order:
 
 ## Step 5a — Render (Mode A: native)
 
-Invoke your native image-generation tool with:
+Use whichever rung of Step 0 you landed on:
+
+### If you chose A (delegate to a host `imagegen` skill)
+
+1. Read the imagegen skill's `SKILL.md` if you haven't already, to learn its input contract.
+2. Invoke it with:
+   - The composed prompt from Step 3 as the text prompt.
+   - The image list from Step 4, in that exact order (raw first, then style references, then any user-supplied slot-2 image).
+3. Capture the resulting image. Save to `<raw_dir>/output/<raw_basename>-<ISO_timestamp>.png`.
+
+### If you chose B (direct image-gen tool)
+
+Invoke the tool directly with:
 
 - The composed prompt from Step 3 (as the text prompt).
 - The image list from Step 4, in that exact order.
 
-Save the returned image to `<raw_dir>/output/<raw_basename>-<ISO_timestamp>.png`. Create the `output/` directory if it doesn't exist. Strip filesystem-unsafe characters from the timestamp (use `YYYYMMDD-HHMMSS`).
+Save the returned image to `<raw_dir>/output/<raw_basename>-<ISO_timestamp>.png`.
 
-If the tool returns image bytes, write them directly. If it returns inline-only, ask the host to also save to the path.
+### Output handling (both A and B)
+
+- Create the `output/` directory if it doesn't exist.
+- Use the timestamp format `YYYYMMDD-HHMMSS` (filesystem-safe).
+- If the tool returns image bytes, write them directly.
+- If the tool returns inline-only (no path, no bytes), explicitly ask the host to also save the image to the output path before continuing.
 
 ## Step 5b — Render (Mode B: API fallback)
 
