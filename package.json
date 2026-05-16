@@ -1,0 +1,37 @@
+{
+  "name": "interior-design-skill",
+  "version": "0.1.0",
+  "description": "Install the interior-design skill into your Claude Code, Codex, or compatible AI host.",
+  "type": "module",
+  "bin": {
+    "interior-design-skill": "./cli.mjs"
+  },
+  "files": [
+    "cli.mjs",
+    "SKILL.md",
+    "README.md",
+    "LICENSE",
+    "requirements.txt",
+    ".env.example",
+    "prompts/",
+    "references/",
+    "scripts/"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/zyliu0/interior-design.git"
+  },
+  "keywords": [
+    "claude-code",
+    "claude-skill",
+    "codex",
+    "interior-design",
+    "ai-image-generation",
+    "gemini",
+    "gpt-image"
+  ]
+}

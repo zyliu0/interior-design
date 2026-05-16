@@ -46,26 +46,38 @@ Each style folder under `references/styles/` holds 2–3 reference images. The m
 
 ## Installation
 
-### Option 1 — Install as a Claude Code skill
+### Option 1 — One-line install via npx (recommended)
 
-The fastest path if you're using Claude Code (or a fork that reads `~/.claude/skills/`):
+```bash
+npx github:zyliu0/interior-design
+```
+
+That's it. The skill is installed to `~/.claude/skills/interior-design` and ready to use. Invoke `/interior-design` in Claude Code or just say "restyle this room" and point at an image.
+
+Other targets:
+
+```bash
+# Install to a Codex skills directory
+npx github:zyliu0/interior-design --codex
+
+# Install to a custom path
+npx github:zyliu0/interior-design --target ~/my-skills/interior-design
+
+# Overwrite an existing install
+npx github:zyliu0/interior-design --force
+```
+
+Requirements: Node 18+. No npm publish, no global install — npx runs the installer directly from this GitHub repo.
+
+### Option 2 — Manual git clone
+
+If you'd rather not run a script:
 
 ```bash
 git clone https://github.com/zyliu0/interior-design.git ~/.claude/skills/interior-design
 ```
 
-That's it. Open a Claude Code session and invoke with `/interior-design` or just say "restyle this room" and point at an image.
-
-Prefer to keep the repo elsewhere? Symlink it in:
-
-```bash
-git clone https://github.com/zyliu0/interior-design.git ~/code/interior-design
-ln -s ~/code/interior-design ~/.claude/skills/interior-design
-```
-
-### Option 2 — Install as a Codex / Gemini app skill
-
-Drop the cloned directory into your host's skill folder per its docs (Codex: `~/.codex/skills/`, Gemini app: paste `SKILL.md` content as a custom instruction). Mode A kicks in automatically because those hosts have native image generation, so no further setup is needed.
+For Codex, swap the destination to `~/.codex/skills/interior-design`. For the Gemini app, paste the contents of `SKILL.md` into the app as a custom instruction.
 
 ### Option 3 — Run as a standalone Python tool
 
@@ -238,7 +250,10 @@ A practical workflow: when output quality drifts, iterate on `prompts/system.md`
 interior-design/
 ├── SKILL.md                          # routing logic + agent-facing flow
 ├── README.md                         # this file
+├── LICENSE                           # MIT
 ├── PLAN.md                           # development plan and history
+├── package.json                      # npx installer manifest
+├── cli.mjs                           # npx installer script
 ├── requirements.txt                  # Python deps for Mode B
 ├── .env.example                      # API key template
 ├── .gitignore                        # ignores .env, output/, __pycache__/
