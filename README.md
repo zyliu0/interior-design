@@ -2,7 +2,7 @@
 
 > Turn any interior — a phone snapshot, a hand sketch, a 3D model screenshot — into a photorealistic professional rendering, restyled to match reference images. Same walls, same camera angle, new soul.
 
-A host-agnostic skill for Claude Code, Codex, Gemini app, and any other multi-modal AI agent. The skill ships with three curated reference styles, an inviolable master prompt that protects the room's spatial fidelity, and an optional Python fallback for hosts that can't generate images natively.
+A small, single-purpose skill for any AI host with native multi-modal image generation. Three curated reference styles, an inviolable master prompt that protects the room's spatial fidelity, and nothing else. No Python, no API keys, no environment probing — image generation is your host's job; this skill just orchestrates the prompt and the references.
 
 ## What it does
 
@@ -24,15 +24,15 @@ The master prompt enforces this. The model is told, in language it cannot overri
 
 The skill asks for your raw image, the style, an optional second reference, and any extra direction. The output lands in `./output/` next to your raw image as `<basename>-<timestamp>.png`.
 
-## How it works
+## Where it runs
 
-The skill auto-routes based on what your host can do.
+This skill works in any host with native multi-modal image generation:
 
-**Mode A — Native (preferred, zero config).** If your host has a built-in image-generation tool — Codex with image gen, the Gemini app, future multi-modal agents — the skill hands the composed prompt and reference images directly to that tool. No API keys, no Python, nothing to install beyond the skill files.
+- **Codex** — with the `imagegen` system skill installed.
+- **Gemini app** — built in.
+- **Any other agent host with an image-generation tool or sub-skill.**
 
-**Mode B — API fallback.** If your host is text-only (Claude Code today, Cursor with most text models, plain LLM CLIs), the skill shells out to `scripts/render.py`, which calls either **Gemini 3.1 Flash Image Preview** or **OpenAI gpt-image-2** over HTTPS. First run prompts for an API key and saves it to `.env` so you only enter it once.
-
-You don't have to think about which mode you're in. The skill detects it.
+It does **not** include a fallback for text-only hosts. If your host can't generate images, the skill will tell you so honestly and stop — it won't ask for API keys or try to install dependencies. That's a feature, not a bug: keeping the skill single-purpose means it's tiny, predictable, and never surprises you with infrastructure prompts.
 
 ## Built-in styles
 
@@ -46,13 +46,11 @@ Each style folder under `references/styles/` holds 2–3 reference images. The m
 
 ## Installation
 
-### Option 1 — Install via the Skills CLI (recommended)
-
 ```bash
 npx skills add zyliu0/interior-design
 ```
 
-That's it. The [Skills CLI](https://skills.sh) auto-detects which AI host you have installed (Claude Code, Codex, Cursor, and 50+ others) and symlinks the skill into the right directory for each one. After it finishes, invoke `/interior-design` in your host or just say "restyle this room" and point at an image.
+That's it. The [Skills CLI](https://skills.sh) auto-detects which AI host you have installed (Codex, Cursor, Claude Code, and 50+ others) and symlinks the skill into the right directory for each one. After it finishes, invoke `/interior-design` in your host or just say "restyle this room" and point at an image.
 
 **Useful flags:**
 
@@ -61,9 +59,9 @@ That's it. The [Skills CLI](https://skills.sh) auto-detects which AI host you ha
 npx skills add zyliu0/interior-design -g
 
 # Target specific agents only
-npx skills add zyliu0/interior-design -a claude-code -a cursor
+npx skills add zyliu0/interior-design -a codex -a cursor
 
-# Copy files instead of symlinking (for environments without symlink support)
+# Copy files instead of symlinking
 npx skills add zyliu0/interior-design --copy
 
 # Update later
@@ -75,9 +73,9 @@ npx skills remove interior-design
 
 Requirements: Node 18+. Discover more skills at [skills.sh](https://skills.sh).
 
-### Option 2 — Manual git clone
+### Manual install
 
-If you'd rather not run a script:
+If you'd rather not use the Skills CLI:
 
 ```bash
 git clone https://github.com/zyliu0/interior-design.git ~/.claude/skills/interior-design
@@ -85,67 +83,7 @@ git clone https://github.com/zyliu0/interior-design.git ~/.claude/skills/interio
 
 For Codex, swap the destination to `~/.codex/skills/interior-design`. For the Gemini app, paste the contents of `SKILL.md` into the app as a custom instruction.
 
-### Option 3 — Run as a standalone Python tool
-
-If you just want the renderer without any AI host wrapper:
-
-```bash
-git clone https://github.com/zyliu0/interior-design.git
-cd interior-design
-python3 -m venv .venv && source .venv/bin/activate
-pip install -r requirements.txt
-cp .env.example .env
-```
-
-Then edit `.env` and paste in at least one API key. See [Mode B setup](#mode-b-setup-api-keys) below.
-
-### Mode B setup (API keys)
-
-Mode B is only needed when your host can't generate images itself. If you're in Claude Code, you'll hit this.
-
-You need **one or both** of these keys:
-
-- **Gemini** (recommended, cheaper): https://aistudio.google.com/apikey
-- **OpenAI**: https://platform.openai.com/api-keys
-
-Open `.env` and paste them in:
-
-```bash
-GEMINI_API_KEY=AIza...
-OPENAI_API_KEY=sk-...
-DEFAULT_PROVIDER=gemini
-```
-
-`DEFAULT_PROVIDER` is only consulted when both keys are present. Otherwise the skill uses whichever key it finds.
-
-Then install the Python deps if you haven't already:
-
-```bash
-pip install -r requirements.txt
-```
-
-Requirements: Python 3.9+, `google-genai`, `openai`, `pillow`, `python-dotenv`.
-
-### Verify the install
-
-Run a dry-run — no API call, no key needed, just confirms the wiring works:
-
-```bash
-cd ~/.claude/skills/interior-design   # or wherever you cloned it
-python3 scripts/render.py \
-  --raw references/styles/warm-minimalism/1.jpg \
-  --ref references/styles/warm-minimalism/2.jpg \
-  --ref references/styles/warm-minimalism/3.jpg \
-  --provider gemini \
-  --user-prompt "warm evening light" \
-  --dry-run
-```
-
-You should see the composed prompt, the image list in order, and the resolved output directory. If you see that, you're good.
-
 ## Usage
-
-### Through the skill (Claude Code, Codex, etc.)
 
 ```
 You: /interior-design
@@ -161,40 +99,11 @@ Agent: Any second reference? (skip with enter)
 You:   (enter)
 Agent: Any extra direction? (skip with enter)
 You:   evening, brass floor lamp
-Agent: Rendering...
+Agent: Generating...
        Output: /Users/me/Desktop/output/my-living-room-20260516-104522.png
 ```
 
-### Direct Python (Mode B only)
-
-```bash
-python3 scripts/render.py \
-  --raw ~/photos/living-room.jpg \
-  --ref references/styles/modern-wabi-sabi/1.jpg \
-  --ref references/styles/modern-wabi-sabi/2.jpg \
-  --ref references/styles/modern-wabi-sabi/3.jpg \
-  --provider gemini \
-  --user-prompt "morning light, ceramic vase on the table" \
-  --out-dir ~/photos/output
-```
-
-Outputs land at `~/photos/output/living-room-<timestamp>-gemini.png`. The script prints the absolute output path on its last stdout line — handy for piping into `open` on macOS:
-
-```bash
-open "$(python3 scripts/render.py ... | tail -1)"
-```
-
-### CLI reference
-
-```
-render.py
-  --raw          PATH     required, the raw image (spatial source)
-  --ref          PATH     repeatable, reference image(s) (style source)
-  --provider     gemini|openai
-  --user-prompt  TEXT     optional secondary direction
-  --out-dir      DIR      default: <raw_dir>/output
-  --dry-run              compose + validate without calling the API
-```
+The skill always asks for the style explicitly. It will never pick one for you from context or vibe words — pick it yourself in the question UI, or name an exact style id (`euro-contemporary`, `modern-wabi-sabi`, `warm-minimalism`) up front.
 
 ## Adding your own styles
 
@@ -226,27 +135,17 @@ That's it. The skill picks it up on the next invocation.
 
 ## Tweaking the master prompt
 
-The prompt lives at `prompts/system.md`. Both modes read it verbatim. The inviolable rules — spatial fidelity, camera angle preservation, 2-point perspective, architectural respect — are deliberately phrased to override user direction. If you want to relax any of them (for example, allow camera-angle drift), edit that file. The user's optional prompt is always appended *below* the system prompt, marked as secondary.
-
-A practical workflow: when output quality drifts, iterate on `prompts/system.md` against a real raw image in Mode A (free) before paying for Mode B renders.
+The prompt lives at `prompts/system.md`. Your host reads it verbatim and passes it to the image model. The inviolable rules — spatial fidelity, camera angle preservation, 2-point perspective, architectural respect — are deliberately phrased to override user direction. If you want to relax any of them (for example, allow camera-angle drift), edit that file. The user's optional prompt is always appended *below* the system prompt, marked as secondary.
 
 ## Troubleshooting
 
-**`ERROR: Image not found`** — the path doesn't exist or isn't readable. Check spelling and shell expansion (`~` doesn't always expand inside quotes).
+**"This host doesn't have image generation available"** — your host doesn't have a native image-gen tool or sub-skill. Switch to Codex (with `imagegen` installed), the Gemini app, or another multi-modal host.
 
-**`ERROR: Image too large (X MB > 20 MB)`** — downscale with Pillow, ImageMagick, or your photo app. The 20 MB cap is enforced before any API call to fail fast.
-
-**`ERROR: GEMINI_API_KEY not set` / `OPENAI_API_KEY not set`** — Mode B couldn't find a key. Either:
-- `.env` is missing → `cp .env.example .env` and add a key.
-- `.env` exists but the key is empty → check there's no whitespace around the `=`.
-- Running from a directory where `.env` isn't found → the script looks for `.env` in the skill root, not your CWD.
-
-**`ERROR: SDK not installed`** — `pip install -r requirements.txt` from the skill directory.
+**The skill rendered without asking which style** — that's a bug in your host's agent runtime (not the skill). The SKILL.md instructs the agent to always ask. Report it.
 
 **The output looks like a different room** — the spatial-fidelity rules drifted. Try:
 1. Re-running with a clearer raw image (better lighting, fewer occluding objects).
 2. Adding a stronger user prompt: "preserve all visible windows and the wood floor pattern exactly."
-3. Switching providers — Gemini and gpt-image-2 weight prompts differently.
 
 **The output ignored my reference style** — too few reference images, or the references are too generic. Make sure your style folder has 2–3 complementary shots, not one. Add one with strong material close-ups.
 
@@ -257,30 +156,19 @@ interior-design/
 ├── SKILL.md                          # routing logic + agent-facing flow
 ├── README.md                         # this file
 ├── LICENSE                           # MIT
-├── PLAN.md                           # development plan and history
-├── requirements.txt                  # Python deps for Mode B
-├── .env.example                      # API key template
-├── .gitignore                        # ignores .env, output/, __pycache__/
 │
 ├── prompts/
 │   └── system.md                     # inviolable master system prompt
 │
-├── references/
-│   ├── styles.json                   # default style catalog
-│   └── styles/
-│       ├── euro-contemporary/        # 3 reference images per style
-│       ├── modern-wabi-sabi/
-│       └── warm-minimalism/
-│
-└── scripts/                          # Mode B (API fallback)
-    ├── render.py                     # CLI entry
-    ├── lib/
-    │   ├── prompt.py                 # load + compose prompt
-    │   └── images.py                 # validation + output paths
-    └── providers/
-        ├── gemini.py                 # gemini-3.1-flash-image-preview
-        └── openai.py                 # gpt-image-2 via images.edit
+└── references/
+    ├── styles.json                   # default style catalog
+    └── styles/
+        ├── euro-contemporary/        # 2–3 reference images per style
+        ├── modern-wabi-sabi/
+        └── warm-minimalism/
 ```
+
+That's the whole repo. Five files, three style folders, nine reference images.
 
 ## License & credits
 
