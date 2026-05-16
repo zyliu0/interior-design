@@ -46,28 +46,34 @@ Each style folder under `references/styles/` holds 2–3 reference images. The m
 
 ## Installation
 
-### Option 1 — One-line install via npx (recommended)
+### Option 1 — Install via the Skills CLI (recommended)
 
 ```bash
-npx github:zyliu0/interior-design
+npx skills add zyliu0/interior-design
 ```
 
-That's it. The skill is installed to `~/.claude/skills/interior-design` and ready to use. Invoke `/interior-design` in Claude Code or just say "restyle this room" and point at an image.
+That's it. The [Skills CLI](https://skills.sh) auto-detects which AI host you have installed (Claude Code, Codex, Cursor, and 50+ others) and symlinks the skill into the right directory for each one. After it finishes, invoke `/interior-design` in your host or just say "restyle this room" and point at an image.
 
-Other targets:
+**Useful flags:**
 
 ```bash
-# Install to a Codex skills directory
-npx github:zyliu0/interior-design --codex
+# Install globally (user-level) instead of project-local
+npx skills add zyliu0/interior-design -g
 
-# Install to a custom path
-npx github:zyliu0/interior-design --target ~/my-skills/interior-design
+# Target specific agents only
+npx skills add zyliu0/interior-design -a claude-code -a cursor
 
-# Overwrite an existing install
-npx github:zyliu0/interior-design --force
+# Copy files instead of symlinking (for environments without symlink support)
+npx skills add zyliu0/interior-design --copy
+
+# Update later
+npx skills update interior-design
+
+# Remove
+npx skills remove interior-design
 ```
 
-Requirements: Node 18+. No npm publish, no global install — npx runs the installer directly from this GitHub repo.
+Requirements: Node 18+. Discover more skills at [skills.sh](https://skills.sh).
 
 ### Option 2 — Manual git clone
 
@@ -252,8 +258,6 @@ interior-design/
 ├── README.md                         # this file
 ├── LICENSE                           # MIT
 ├── PLAN.md                           # development plan and history
-├── package.json                      # npx installer manifest
-├── cli.mjs                           # npx installer script
 ├── requirements.txt                  # Python deps for Mode B
 ├── .env.example                      # API key template
 ├── .gitignore                        # ignores .env, output/, __pycache__/
